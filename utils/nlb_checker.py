@@ -1,6 +1,7 @@
 
 import csv
 import logging
+logger = logging.getLogger(__name__)
 import multiprocessing
 import os
 import re
@@ -15,7 +16,7 @@ from tqdm import tqdm
 
 
 class NlbChecker():
-    def __init__(self, client, input_dir, output_dir):
+    def __init__(self, client, input_dir, output_dir, num_threads=multiprocessing.cpu_count()):
         self.client = client
         self.input_dir = input_dir
         self.output_dir = output_dir
@@ -33,8 +34,8 @@ class NlbChecker():
             'ISBN',
             'ISBN13'
         ]
-        self.NUM_WORKERS = multiprocessing.cpu_count()
-        logging.info(f"Multithreading uses {self.NUM_WORKERS} threads!")
+        self.NUM_WORKERS = max(4,num_threads)
+        logger.info(f"Multithreading uses {self.NUM_WORKERS} threads!")
         self.filtered_rows = []
         self.write_queue = Queue()
 
@@ -56,6 +57,12 @@ class NlbChecker():
     @staticmethod
     def worker(client, books, out_queue):
 
+        def get_due_date(item):
+            if item.status_desc != 'Not on Loan':
+                return item.due_date
+            else:
+                return None
+
         def get_availability(client, row):
             """
             1) Use ISBN to search,
@@ -74,7 +81,7 @@ class NlbChecker():
                             'Rating': row['Average Rating'],
                             'NlbBranch': item.branch_name,
                             'NlbStatus': item.status_desc,
-                            'NlbDueDate': (item.due_date if item.status_desc == 'On Loan' else None),
+                            'NlbDueDate': get_due_date(item),
                             'NlbCallNo': item.call_number,
                             'NlbShelf': item.location_desc,
                             'ISBN': row['ISBN'],
@@ -86,13 +93,13 @@ class NlbChecker():
                 pass
             return output_rows
 
-
         for row in tqdm(books):
             output_rows = get_availability(client, row)
             out_queue.put(output_rows)
         return
 
     def start_threads(self, num_books_per_worker):
+        logger.info("Requesting from NLB!")
         threads = []
         row_count = 0
         for i in range(self.NUM_WORKERS):
@@ -106,12 +113,13 @@ class NlbChecker():
             t.join()
 
     def write_to_file(self, writer):
+        logger.info("Writing to file!")
         all_output_rows = []
         while not self.write_queue.empty():
             output_rows = self.write_queue.get()
             all_output_rows.extend(output_rows)
 
-        all_output_rows = sorted(all_output_rows, key=lambda row: row['GoodreadsRating'], reverse=True)
+        all_output_rows = sorted(all_output_rows, key=lambda row: row['Rating'], reverse=True)
         writer.writerows(all_output_rows)
 
     def process_csv(self, csv_path):
@@ -120,7 +128,7 @@ class NlbChecker():
             reader = csv.DictReader(inputf)
             writer = csv.DictWriter(outputf, fieldnames=self.output_headers)
             writer.writeheader()
-            logging.info(f"Reading from {csv_path} \nWriting to {output_path}")
+            logger.info(f"Reading from {csv_path} \nWriting to {output_path}")
             self.filtered_rows = self.filter_rows(reader)
             num_books_per_worker = self.get_num_objs_per_worker(len(self.filtered_rows))
 
