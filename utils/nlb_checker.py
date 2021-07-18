@@ -70,8 +70,16 @@ class NlbChecker():
             """
             output_rows = []
             isbn = re.sub("[^0-9]", "", row['ISBN'])
-            if isbn != '':
-                availability = client.get_availability_info(isbn=isbn)
+            isbn13 = re.sub("[^0-9]", "", row['ISBN13'])
+            if isbn == '':
+                if isbn13 == '':
+                    isbn_to_search = ''
+                else: 
+                    isbn_to_search = isbn13
+            else:
+                isbn_to_search = isbn
+            if isbn_to_search != '':
+                availability = client.get_availability_info(isbn=isbn_to_search)
                 if availability.items:
                     for item in availability.items:
                         result_dict = {
@@ -87,7 +95,6 @@ class NlbChecker():
                             'ISBN': row['ISBN'],
                             'ISBN13': row['ISBN13']
                         }                    
-                        # print(f'Branch: {item.branch_name}\nStatus: {item.status_desc}\n')
                         output_rows.append(result_dict)
             else:
                 pass
@@ -102,6 +109,7 @@ class NlbChecker():
         logger.info("Requesting from NLB!")
         threads = []
         row_count = 0
+        logging.info(f"Searching availbility for {len(self.filtered_rows)} books!")
         for i in range(self.NUM_WORKERS):
             args = (self.client, self.filtered_rows[row_count:row_count + num_books_per_worker[i]], self.write_queue)
             t = threading.Thread(name=f"Worker{i}", target=self.worker, args=args)
@@ -150,12 +158,3 @@ class NlbChecker():
 
 
 
-    # results = client.search('How China Escaped the Poverty Trap', author='yuen yuen ang', media_code=MediaCode.BOOKS, limit=5)
-    # # results = client.search('lord of the rings', author='tolkien', media_code=MediaCode.BOOKS, limit=3)
-    # for title in results.titles:
-    #     print(f'Title: {title.title_name}\nISBN: {title.isbn}\nPublished: {title.publish_year}\n')
-
-    # availability = client.get_availability_info(isbn='1328915336')
-    # for item in availability.items:
-    #     pprint(item.__dict__)
-    #     # print(f'Branch: {item.branch_name}\nStatus: {item.status_desc}\n')
