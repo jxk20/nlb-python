@@ -69,16 +69,13 @@ class NlbChecker():
             2) Else, Use title and author (TODO)
             """
             output_rows = []
-            isbn = re.sub("[^0-9]", "", row['ISBN'])
-            isbn13 = re.sub("[^0-9]", "", row['ISBN13'])
-            if isbn == '':
-                if isbn13 == '':
-                    isbn_to_search = ''
+            isbn = re.sub("[^a-zA-Z0-9]", "", row['ISBN'])
+            isbn13 = re.sub("[^a-zA-Z0-9]", "", row['ISBN13'])
+            if isbn != '' or isbn13 != '':
+                if isbn != '':
+                    isbn_to_search = isbn
                 else: 
                     isbn_to_search = isbn13
-            else:
-                isbn_to_search = isbn
-            if isbn_to_search != '':
                 availability = client.get_availability_info(isbn=isbn_to_search)
                 if availability.items:
                     for item in availability.items:
@@ -96,6 +93,22 @@ class NlbChecker():
                             'ISBN13': row['ISBN13']
                         }                    
                         output_rows.append(result_dict)
+                else:
+                    result_dict = {
+                        'BookId': row['Book Id'],
+                        'Title': row['Title'],
+                        'Author': row['Author'],
+                        'NlbCallNo': '',
+                        'Rating': row['Average Rating'],
+                        'NlbBranch': '',
+                        'NlbStatus': '',
+                        'NlbDueDate': '',
+                        'NlbShelf': '',
+                        'ISBN': row['ISBN'],
+                        'ISBN13': row['ISBN13']
+                    }                    
+                    output_rows.append(result_dict)
+
             else:
                 pass
             return output_rows
@@ -123,12 +136,19 @@ class NlbChecker():
     def write_to_file(self, writer):
         logger.info("Writing to file!")
         all_output_rows = []
+        num_books = 0
+        num_available_books = 0
         while not self.write_queue.empty():
             output_rows = self.write_queue.get()
             all_output_rows.extend(output_rows)
+            num_books += 1
+            if len(output_rows) == 1 and output_rows[0]['NlbStatus'] == '':
+                num_available_books += 1
 
         all_output_rows = sorted(all_output_rows, key=lambda row: row['Rating'], reverse=True)
         writer.writerows(all_output_rows)
+        with open("test.txt",'w') as f:
+            f.write(f"Available books: {num_available_books}/{num_books}={100*num_available_books/num_books:.2f}%")
 
     def process_csv(self, csv_path):
         output_path = self._get_output_path(csv_path)
@@ -142,10 +162,6 @@ class NlbChecker():
 
             self.start_threads(num_books_per_worker)
             self.write_to_file(writer)
-            # for row in tqdm(list(reader)):
-            #     if row['Bookshelves'] == 'to-read':
-            #         output_rows = self.get_availability(row)
-            #         writer.writerows(output_rows)
 
 
     def process_all(self):
