@@ -34,7 +34,7 @@ class NlbChecker():
             'ISBN',
             'ISBN13'
         ]
-        self.NUM_WORKERS = max(4,num_threads)
+        self.NUM_WORKERS = min(4,num_threads)
         logger.info(f"Multithreading uses {self.NUM_WORKERS} threads!")
         self.filtered_rows = []
         self.write_queue = Queue()
