@@ -152,7 +152,7 @@ class NlbChecker():
 
     def process_csv(self, csv_path):
         output_path = self._get_output_path(csv_path)
-        with open(str(csv_path),'r') as inputf, open(str(output_path),'w', newline='') as outputf:
+        with open(str(csv_path),'r',encoding="utf8") as inputf, open(str(output_path),'w', newline='') as outputf:
             reader = csv.DictReader(inputf)
             writer = csv.DictWriter(outputf, fieldnames=self.output_headers)
             writer.writeheader()
