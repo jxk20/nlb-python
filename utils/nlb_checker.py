@@ -1,4 +1,3 @@
-
 import csv
 import logging
 logger = logging.getLogger(__name__)
@@ -43,11 +42,11 @@ class NlbChecker():
         stem = csv_path.stem
         suffix = csv_path.suffix
         parent = csv_path.parent
-        return self.output_dir / f"{stem}-caa{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv"    
+        return self.output_dir / f"{stem}-caa{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv"
 
     @staticmethod
     def filter_rows(reader):
-        return [row for row in reader if row['Bookshelves'] == 'to-read']
+        return [row for row in reader if row['Exclusive Shelf'] == 'to-read']
 
     def get_num_objs_per_worker(self, num):
         num_objs_per_worker = (num % self.NUM_WORKERS) * [int(num // self.NUM_WORKERS) + 1]
@@ -74,7 +73,7 @@ class NlbChecker():
             if isbn != '' or isbn13 != '':
                 if isbn != '':
                     isbn_to_search = isbn
-                else: 
+                else:
                     isbn_to_search = isbn13
                 availability = client.get_availability_info(isbn=isbn_to_search)
                 if availability.items:
@@ -91,7 +90,7 @@ class NlbChecker():
                             'NlbShelf': item.location_desc,
                             'ISBN': row['ISBN'],
                             'ISBN13': row['ISBN13']
-                        }                    
+                        }
                         output_rows.append(result_dict)
                 else:
                     result_dict = {
@@ -106,7 +105,7 @@ class NlbChecker():
                         'NlbShelf': '',
                         'ISBN': row['ISBN'],
                         'ISBN13': row['ISBN13']
-                    }                    
+                    }
                     output_rows.append(result_dict)
 
             else:
@@ -129,7 +128,7 @@ class NlbChecker():
             row_count += num_books_per_worker[i]
             threads.append(t)
             t.start()
-        
+
         for t in threads:
             t.join()
 

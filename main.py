@@ -32,7 +32,7 @@ if __name__ == "__main__":
         "-u", "--upload-gdrive", help="Flag on whether to write to GoogleDrive", action="store_true"
     )
     parser.add_argument(
-        "-n", "--num-threads", help="Number of threads. Max is 4.", type=int, default=4
+        "-n", "--num-threads", help="Number of threads. Max is 1.", type=int, default=1
     )
     args = parser.parse_args()
 
