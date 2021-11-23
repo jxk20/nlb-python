@@ -13,7 +13,7 @@ conda create --name nlb --file requirements.txt
 2. Create a `config.env` file. You make take reference to `config-example.env`.
 
 - `API_KEY` refers to your NLB API key. You may get one from [here](https://www.nlb.gov.sg/GetInvolved/ContributeCreate/NLBlabs.aspx)
-- `SPREADSHEET_ID` refers to your Google Sheet spreadsheet ID if you wish to upload your output CSV there. Note that this functionality may not work all the time.
+- `SPREADSHEET_ID` refers to your Google Sheet spreadsheet ID if you wish to upload your output CSV there. Note that this functionality is still quite buggy.
 
 ## Usage
 
@@ -21,4 +21,4 @@ conda create --name nlb --file requirements.txt
 2. Save your library CSV file into the `inputs` folder.
 3. Activate your `nlb` conda or virtualenv environment
 4. Run `./run.sh` in your command line.
-5. Go to `outputs` to view retrieve the output CSV file.
+5. Go to `outputs` to retrieve the output CSV file.
