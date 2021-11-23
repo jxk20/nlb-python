@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # Etc.
+config.env
 **/*.csv
