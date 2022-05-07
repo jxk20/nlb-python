@@ -28,19 +28,6 @@ if __name__ == "__main__":
         type=str,
         default="0.0",
     )
-    parser.add_argument(
-        "-u",
-        "--upload-gdrive",
-        help="Flag on whether to write to GoogleDrive",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-n",
-        "--num-threads",
-        help="Number of threads. Default is 1.",
-        type=int,
-        default=1,
-    )
     args = parser.parse_args()
 
     INPUT_DIR = Path(args.inputs)
@@ -58,6 +45,5 @@ if __name__ == "__main__":
         client=client,
         input_dir=INPUT_DIR,
         output_dir=OUTPUT_DIR,
-        num_threads=args.num_threads,
     )
     csv_paths = nlb_checker.process_all()
